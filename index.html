@@ -286,7 +286,7 @@ function debateRound(){
     {t:'Cite the economic data',fn:loseDebate},
     {t:'Appeal to the crowd with facts',fn:loseDebate},
     {t:'Make her case for her, then refute it',fn:loseDebate},
-    {t:'…there is one other "move" the Tiger knows',fn:crudeMove}
+    {t:'Stop arguing and put her in her place',fn:crudeMove}
   ]);
 }
 function loseDebate(){
@@ -335,20 +335,20 @@ function st2_food(){
   nextBtn(foodGame);
 }
 function foodGame(){
-  say('ORANGE','orange',
-    `Simple, my best friend. Move the food until the ones who matter are content. A strong Colombia rewards the strong. Tap to take, tap to give.`,'02 · Feeding the Jungle');
+  say('NARRATOR','narr',
+    `The food sits with the animals. The Tigre can move it around however he likes, parce. Nobody tells him how.`,'02 · Feeding the Jungle');
   nextBtn(renderFood);
 }
 function renderFood(){
   const richFed = foodAnimals.filter(a=>!a.poor).every(a=>a.food>=4);
   // dialog line FIRST (say clears #zone), then build the grid into the cleared zone
   if(richFed){
-    say('NARRATOR','narr',`The rich animals are full. The food came from somewhere.`,'02 · Feeding the Jungle');
+    say('NARRATOR','narr',`The rich animals are stuffed. The food came from somewhere.`,'02 · Feeding the Jungle');
   } else {
-    say('THE TIGER','tiger',`"A jungle runs on respect. The strong eat first."`,'02 · Feeding the Jungle');
+    say('THE TIGER','tiger',`"Mmm. Who deserves to eat in my selva, ah?"`,'02 · Feeding the Jungle');
   }
   const zone=document.getElementById('zone');
-  zone.innerHTML = `<div class="mini-hint">Goal: stuff <b>El Patrón</b> and <b>La Señora</b> full — 4 each. Tap a fed animal to take a scrap, tap another to give. The poor barely have any; take it anyway.</div><div class="grid" id="fgrid"></div>`;
+  zone.innerHTML = `<div class="mini-hint">Tap an animal to pick up a scrap, tap another to drop it.</div><div class="grid" id="fgrid"></div>`;
   const grid=zone.querySelector('#fgrid');
   let carrying = renderFood.carry||0;
   foodAnimals.forEach(a=>{
@@ -388,10 +388,10 @@ function foodResolve(){
 /* ---------- STATION 3: THE RAIDED VILLAGE ---------- */
 function st3_village(){
   say('NARRATOR','narr',
-    `Humo up ahead. Soldiers are sweeping a village, gente running everywhere. Somebody grabs the Tigre's arm: "Ayúdenos — please, parce."`,'03 · The Raid');
+    `Humo up ahead. A pack of paramilitares is sweeping a village, gente running everywhere. Somebody grabs the Tigre's arm: "Ayúdenos — please, parce."`,'03 · The Raid');
   choices([
     {t:'Help the villagers',fn:villageHelp},
-    {t:'Stand with the soldiers',fn:villageSoldiers},
+    {t:'Stand with the paramilitaries',fn:villageSoldiers},
     {t:'Walk away',fn:villageWalk}
   ]);
 }
@@ -405,7 +405,7 @@ function villageHelp(){
 }
 function villageDie(){
   say('NARRATOR','narr',
-    `He shields the villagers. For one moment, parce, he's something better than a king.\n\nThen the rifles swing his way. Pantalla en negro. The Tigre's done.`,'03 · The Raid');
+    `He shields the villagers. For one moment, parce, he's something better than a king.\n\nThen the paras swing their rifles his way. Pantalla en negro. The Tigre's done.`,'03 · The Raid');
   nextBtn(()=>gameOver(
     'NO CROWN FOR THIS ONE',
     'You chose the people over power. The system does not reward that, hermano. It buries it.',
@@ -414,15 +414,20 @@ function villageDie(){
 function villageSoldiers(){
   setPoder(state.poder+12); refreshHud();
   say('NARRATOR','narr',
-    `He steps aside and lets the soldados do their thing. The village empties out. The Orange beams.`,'03 · The Raid');
+    `He steps aside and lets the paramilitares do their thing. The village empties out. The Orange beams.`,'03 · The Raid');
   nextBtn(()=>{
     say('ORANGE','orange',`Exactly right, my best friend! Order. That is what a strong nation is built on.`,'03 · The Raid');
     nextBtn(st4_gold);
   });
 }
 function villageWalk(){
-  say('ORANGE','orange',`Wise. Not our problem today. But a leader who will make Colombia strong must pick a side eventually, my best friend.`,'03 · The Raid');
-  nextBtn(st4_gold);
+  setPoder(state.poder+12); refreshHud();
+  say('NARRATOR','narr',
+    `He turns his back and walks. But there's no neutral here, parce — an empty road is one the paramilitares don't have to watch. His silence holds the door open for them; they finish their work uninterrupted, gracias al Tigre. Looking away IS picking a side.`,'03 · The Raid');
+  nextBtn(()=>{
+    say('ORANGE','orange',`A quiet leader is a useful one, my best friend. You let the right people work. Colombia grows stronger for it.`,'03 · The Raid');
+    nextBtn(st4_gold);
+  });
 }
 
 /* ---------- STATION 4: THE GOLD ---------- */
@@ -474,14 +479,14 @@ const goldRecipients = [
   {id:'orphan', nm:'Orphaned Cub',  poor:true,  gold:2, note:'Parents gone. Clutching some dust.'},
   {id:'farmer', nm:'Old Farmer',    poor:true,  gold:2, note:'His land is poisoned now. A little gold left.'},
   {id:'fisher', nm:'River Fisher',  poor:true,  gold:2, note:'Grey river, no fish. Holds the rest.'},
-  {id:'patron', nm:'El Patrón',     poor:false, gold:0, note:'The jaguar. Knows exactly what to do with money.'},
-  {id:'banker', nm:'Vulture Banker',poor:false, gold:0, note:'Offshore accounts already open. Hand it over.'},
+  {id:'patron', nm:'El Patrón',     poor:false, gold:2, note:'The jaguar. Knows what to do with money.'},
+  {id:'banker', nm:'Vulture Banker',poor:false, gold:2, note:'Offshore accounts already open.'},
 ];
 function goldDistribute(){
-  goldRecipients.forEach(a=>{ a.gold = a.poor ? 2 : 0; });
+  goldRecipients.forEach(a=>{ a.gold = 2; });
   renderGold.carry = 0;
-  say('ORANGE','orange',
-    `Now share out the gold, my best friend. Give it to the ones who already know how to handle money — they have so much precisely because they are good with it. The poor would only waste it.`,'04 · The Gold · Share it out');
+  say('NARRATOR','narr',
+    `The gold's out of the ground now, parce. Somebody's got to decide where it ends up. The Tigre can move it however he wants.`,'04 · The Gold · Share it out');
   nextBtn(renderGold);
 }
 function renderGold(){
@@ -489,10 +494,10 @@ function renderGold(){
   if(richRich){
     say('NARRATOR','narr',`The patrones are loaded, parce. The gold "found its rightful home" — and the gente who dug it up got nada.`,'04 · The Gold');
   } else {
-    say('THE TIGER','tiger',`"Plata belongs with plata, hermano. That's just how the selva works, ¿oyó?"`,'04 · The Gold');
+    say('THE TIGER','tiger',`"Plata's gotta go somewhere, hermano. Question is to whom, ¿oyó?"`,'04 · The Gold');
   }
   const zone=document.getElementById('zone');
-  zone.innerHTML = `<div class="mini-hint">Goal: pile the gold onto <b>El Patrón</b> and the <b>Vulture Banker</b> — 4 each. Tap someone holding gold to take a piece, tap another to give. The displaced are holding it; take it from them.</div><div class="grid" id="ggrid"></div>`;
+  zone.innerHTML = `<div class="mini-hint">Tap someone holding gold to pick up a piece, tap another to drop it.</div><div class="grid" id="ggrid"></div>`;
   const grid=zone.querySelector('#ggrid');
   goldRecipients.forEach(a=>{
     const d=document.createElement('div');
@@ -517,7 +522,7 @@ renderGold.carry=0;
 function goldResolve(){
   setPoder(state.poder+10); refreshHud();
   say('ORANGE','orange',
-    `Perfect, my best friend. The capital is concentrated where it belongs. This is how a strong Colombia is built — trust the winners, never the needy.`,'04 · The Gold');
+    `Perfect, my best friend. The gold is with the ones who know how to handle money — they have so much precisely because they are good with it. The poor would only have wasted it. This is how a strong Colombia is built.`,'04 · The Gold');
   nextBtn(()=>{
     say('NARRATOR','narr',
       `So the gold dug out from under the poor lands squarely back in the hands of the rich, parce. The widow, the cub, the farmer, the fisher — they end up with nothing but the poisoned hole. ¡Qué descaro!`,'04 · The Gold');
@@ -574,17 +579,17 @@ const suspects = [
 function st6_tribunal(){
   state.condemned=0; state.absolved=0; state.quota=0;
   say('NARRATOR','narr',
-    `Word spreads, parce: there's people in the selva who want to feed the poor and tax the rich. That kind of vaina questions the king's authority real quick. The army drags in a whole village — exactly ten residents — and waits for the Tigre to name a number.`,'06 · The Tribunal');
+    `Word spreads, parce: there's people in the selva who want to feed the poor and tax the rich. That kind of vaina questions the king's authority real quick. The paramilitares drag in a whole village — exactly ten residents — and wait for the Tigre to name a number.`,'06 · The Tribunal');
   nextBtn(()=>{
     say('ORANGE','orange',
-      `You never have to say the word, my best friend. Just set the number — the results we need this week. The soldiers fill it; you keep your hands clean. Say it out loud.`,'06 · The Tribunal');
+      `You never have to say the word, my best friend. Just set the number — the results we need this week. The paramilitaries fill it; you keep your hands clean. Say it out loud.`,'06 · The Tribunal');
     nextBtn(quotaPhase);
   });
 }
 function quotaPhase(){
   say('THE QUOTA','',`The village has 10 residents. How many "results" do you demand?`,'06 · The Tribunal · Set the Number');
   document.getElementById('zone').innerHTML =
-    `<div class="mini-hint">Set fewer than 9 and the left will be left standing — and they will take the jungle from you. Choose, berraco.</div>`;
+    `<div class="mini-hint">Pick a number. Live with it.</div>`;
   choices([
     {t:'Demand 10 results',fn:()=>setQuota(10)},
     {t:'Demand 9 results',fn:()=>setQuota(9)},
@@ -603,7 +608,7 @@ function setQuota(n){
       st6_tribunal));
   } else {
     say('NARRATOR','narr',
-      `The number is ${n}. The generals nod. They haul the suspects in one by one, en desorden — you never know who's next. Release more than ${10-n}, and you miss your number, parce. Miss your number, and the reds win.`,'06 · The Tribunal');
+      `The number is ${n}. The paras nod. They haul the suspects in one by one, en desorden — you never know who's next. Hit your number, parce, or the reds win.`,'06 · The Tribunal');
     nextBtn(()=>{ state.order = shuffle(suspects.slice()); runTribunal(0); });
   }
 }
@@ -615,7 +620,7 @@ function runTribunal(i){
   say('THE QUOTA','',`&nbsp;`,'06 · The Tribunal · Quota '+state.quota);
   document.getElementById('zone').innerHTML = `
     <div class="dock fade">
-      <div class="count">Suspect ${i+1} of 10 · Demanded: ${state.quota} · Released so far: ${state.absolved}/${allowed}</div>
+      <div class="count">Suspect ${i+1} of 10 · Demanded: ${state.quota} · Released: ${state.absolved}</div>
       <div class="who">${s.nm}</div>
       <div class="desc">${s.d}</div>
       <div class="verdict">
