@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EL TIGRE — King of the Jungle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --jungle:#0f5132; --jungle-deep:#063122; --gold:#e3a52b; --blood:#b8341f;
+    --bone:#efe7d2; --ink:#120e08; --orange:#ee7b1e; --rot:0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:'Archivo',system-ui,sans-serif;color:var(--bone);
+    background:var(--ink);overflow:hidden;
+    display:flex;justify-content:center;align-items:stretch;
+  }
+  #app{
+    position:relative;width:100%;max-width:520px;height:100dvh;
+    display:flex;flex-direction:column;
+    background:
+      radial-gradient(120% 90% at 50% -10%, rgba(227,165,43,.18), transparent 55%),
+      linear-gradient(180deg,
+        color-mix(in srgb, var(--jungle) calc(100% - var(--rot)*1%), #2a2a2a) 0%,
+        var(--jungle-deep) 100%);
+    transition:background 1.2s ease;
+  }
+  /* ---- top bar ---- */
+  #hud{
+    display:flex;align-items:center;gap:10px;padding:12px 16px 8px;
+    font-family:'Archivo';
+  }
+  #hud .label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.75;white-space:nowrap}
+  #meter{flex:1;height:10px;border:1px solid rgba(239,231,210,.35);border-radius:99px;overflow:hidden;background:rgba(0,0,0,.25)}
+  #meterfill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--blood));transition:width .8s ease}
+  #poder{font-family:'Anton';font-size:15px;color:var(--gold);min-width:34px;text-align:right}
+  /* ---- stage ---- */
+  #stage{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;overflow-y:auto}
+  .scene-title{
+    font-family:'Anton';text-transform:uppercase;color:var(--gold);
+    font-size:13px;letter-spacing:.22em;margin-bottom:auto;padding-top:6px;opacity:.85
+  }
+  .speaker{font-family:'Anton';letter-spacing:.04em;font-size:13px;text-transform:uppercase;margin-bottom:4px;color:var(--bone)}
+  .speaker.tiger{color:var(--gold)}
+  .speaker.orange{color:var(--orange)}
+  .speaker.narr{color:#9fb8a8;font-style:italic;font-family:'Archivo';font-weight:600;letter-spacing:.08em}
+  /* ---- art panel ---- */
+  #art{width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;margin-bottom:10px;
+    border:1px solid rgba(239,231,210,.16);background:#06100b;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  #art .art-layer{position:absolute;inset:0}
+  #art .art-layer svg,#art .art-layer img{width:100%;height:100%;display:block;object-fit:cover}
+  #art .art-portrait{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center}
+  #art .art-portrait svg{width:auto;height:86%;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45))}
+  #art .art-portrait img{width:auto;height:92%;object-fit:contain}
+  #say{
+    font-size:19px;line-height:1.42;min-height:96px;
+    background:rgba(6,16,11,.55);border:1px solid rgba(239,231,210,.14);
+    border-left:3px solid var(--gold);border-radius:8px;padding:14px 16px;
+    backdrop-filter:blur(2px);
+  }
+  #say.orange-box{border-left-color:var(--orange)}
+  #say.narr-box{border-left-color:#5d7a68}
+  /* ---- choices ---- */
+  #choices{padding:10px 16px 18px;display:flex;flex-direction:column;gap:9px}
+  button.choice{
+    font-family:'Archivo';font-weight:600;font-size:16px;text-align:left;
+    color:var(--bone);background:rgba(6,16,11,.6);
+    border:1px solid rgba(239,231,210,.22);border-radius:8px;
+    padding:14px 16px;cursor:pointer;transition:.15s;line-height:1.3;
+  }
+  button.choice:hover,button.choice:focus-visible{background:rgba(227,165,43,.16);border-color:var(--gold);outline:none}
+  button.choice:active{transform:translateY(1px)}
+  button.next{align-self:flex-end;background:var(--gold);color:var(--ink);border:none;font-family:'Anton';
+    letter-spacing:.08em;padding:12px 26px;border-radius:99px;font-size:15px;cursor:pointer}
+  button.next:active{transform:translateY(1px)}
+  /* ---- minigame zones ---- */
+  #zone{padding:6px 16px 12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .crit{
+    background:rgba(6,16,11,.6);border:1px solid rgba(239,231,210,.2);border-radius:9px;
+    padding:11px;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:.15s;
+  }
+  .crit:active{transform:scale(.98)}
+  .crit .nm{font-family:'Anton';font-size:14px;letter-spacing:.03em}
+  .crit .st{font-size:12px;opacity:.8}
+  .crit.poor{border-color:rgba(184,52,31,.5)}
+  .crit.rich{border-color:rgba(227,165,43,.6)}
+  .pips{display:flex;gap:3px;flex-wrap:wrap}
+  .pip{width:13px;height:13px;border-radius:3px;background:var(--gold)}
+  .pip.empty{background:rgba(255,255,255,.12)}
+  .mini-hint{font-size:13px;opacity:.85;margin:8px 2px;line-height:1.4}
+  /* tribunal */
+  .dock{background:rgba(6,16,11,.65);border:1px solid rgba(239,231,210,.2);border-radius:9px;padding:16px;text-align:center}
+  .dock .who{font-family:'Anton';font-size:22px;letter-spacing:.03em;margin-bottom:6px}
+  .dock .desc{font-size:14px;opacity:.88;min-height:40px;line-height:1.4}
+  .dock .count{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6;margin-bottom:10px}
+  .verdict{display:flex;gap:9px;margin-top:14px}
+  .verdict button{flex:1;font-family:'Anton';letter-spacing:.05em;font-size:14px;padding:13px;border-radius:8px;cursor:pointer;border:none}
+  .v-cond{background:var(--blood);color:var(--bone)}
+  .v-abs{background:rgba(239,231,210,.14);color:var(--bone);border:1px solid rgba(239,231,210,.3)!important}
+  /* title / end */
+  .center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:30px}
+  .center h1{font-family:'Anton';font-size:clamp(44px,16vw,86px);line-height:.9;letter-spacing:.02em;color:var(--gold);text-shadow:0 4px 0 rgba(0,0,0,.3)}
+  .center .sub{margin:14px 0 4px;font-size:14px;letter-spacing:.28em;text-transform:uppercase;color:var(--orange)}
+  .center .tag{font-size:14px;opacity:.8;max-width:300px;line-height:1.5;margin:18px 0 30px}
+  .center button{font-family:'Anton';letter-spacing:.1em;background:var(--blood);color:var(--bone);border:none;
+    padding:15px 40px;border-radius:99px;font-size:17px;cursor:pointer}
+  .disclaimer{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:10px;opacity:.45;padding:0 24px;line-height:1.4}
+  .fade{animation:fade .5s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- screens injected by JS -->
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   EL TIGRE — a satirical visual novel about a would-be king.
+   The game's point of view condemns the tiger throughout.
+   The Orange: no slang. A sycophantic propagandist who calls the
+   Tiger "my best friend" and the man who'll make Colombia strong again.
+   ============================================================ */
+
+const app = document.getElementById('app');
+let state = { poder:0, rot:0, debateTries:0, foodDone:false, condemned:0, absolved:0 };
+
+/* ---------- helpers ---------- */
+function setPoder(v){
+  state.poder = Math.max(0, Math.min(100, v));
+  state.rot = state.poder; // jungle rots as power grows
+  document.documentElement.style.setProperty('--rot', state.rot);
+}
+function shell(){
+  app.innerHTML = `
+    <div id="hud">
+      <span class="label">Poder</span>
+      <div id="meter"><div id="meterfill"></div></div>
+      <span id="poder">0</span>
+    </div>
+    <div id="stage"></div>
+    <div id="zone"></div>
+    <div id="choices"></div>`;
+  refreshHud();
+}
+function refreshHud(){
+  const f=document.getElementById('meterfill'), p=document.getElementById('poder');
+  if(f){f.style.width=state.poder+'%'; p.textContent=state.poder;}
+}
+function say(speaker, cls, text, title){
+  const stage=document.getElementById('stage');
+  stage.innerHTML = `
+    ${title?`<div class="scene-title">${title}</div>`:'<div class="scene-title">&nbsp;</div>'}
+    <div class="fade">
+      ${artPanel(speaker,title)}
+      <div class="speaker ${cls}">${speaker}</div>
+      <div id="say" class="${cls==='orange'?'orange-box':cls==='narr'?'narr-box':''}">${text}</div>
+    </div>`;
+  document.getElementById('zone').innerHTML='';
+}
+function choices(list){
+  const c=document.getElementById('choices');
+  c.innerHTML='';
+  list.forEach(o=>{
+    const b=document.createElement('button');
+    b.className = o.next?'choice next':'choice';
+    b.textContent=o.t;
+    b.onclick=o.fn;
+    c.appendChild(b);
+  });
+}
+function nextBtn(fn,label='Continue'){
+  choices([{t:label,next:true,fn}]);
+}
+
+/* ============================================================
+   ART  —  inline SVG by default. To use your own pictures,
+   put a path/URL into a slot below (e.g. ART.tiger='art/tiger.png').
+   Empty slot  ->  the built-in SVG is shown instead.
+   Backdrops:  bg_intro, bg_01 … bg_07, bg_crown
+   Characters: tiger, orange, woman, figure
+   ============================================================ */
+const ART = {
+  tiger:'', orange:'', woman:'', figure:'',
+  bg_intro:'', bg_01:'', bg_02:'', bg_03:'', bg_04:'',
+  bg_05:'', bg_06:'', bg_07:'', bg_crown:''
+};
+
+const SPRITE = {
+  tiger:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tgf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2a93a"/><stop offset="1" stop-color="#d9831b"/></linearGradient></defs><path d="M34 14 L40 4 L50 12 L60 4 L66 14 L62 22 L38 22Z" fill="#e3a52b" stroke="#9c6a12" stroke-width="1.5"/><circle cx="40" cy="5" r="2.4" fill="#b8341f"/><circle cx="60" cy="5" r="2.4" fill="#b8341f"/><circle cx="50" cy="12" r="2.4" fill="#b8341f"/><circle cx="28" cy="40" r="12" fill="url(#tgf)"/><circle cx="72" cy="40" r="12" fill="url(#tgf)"/><circle cx="28" cy="40" r="5" fill="#3a1d08"/><circle cx="72" cy="40" r="5" fill="#3a1d08"/><ellipse cx="50" cy="62" rx="34" ry="32" fill="url(#tgf)"/><g fill="#2a1505"><path d="M50 30 q-4 10 0 18 q4-8 0-18Z"/><path d="M30 40 q6 8 4 18 l-5-2 q1-9-3-15Z"/><path d="M70 40 q-6 8-4 18 l5-2 q-1-9 3-15Z"/><path d="M18 60 q8 2 12 6 l-2 4 q-6-4-12-5Z"/><path d="M82 60 q-8 2-12 6 l2 4 q6-4 12-5Z"/></g><ellipse cx="50" cy="74" rx="18" ry="14" fill="#f6e7cf"/><ellipse cx="38" cy="58" rx="5" ry="6" fill="#fff"/><ellipse cx="62" cy="58" rx="5" ry="6" fill="#fff"/><circle cx="38" cy="59" r="2.6" fill="#1d3b12"/><circle cx="62" cy="59" r="2.6" fill="#1d3b12"/><path d="M31 52 L46 56" stroke="#2a1505" stroke-width="2.5" stroke-linecap="round"/><path d="M69 52 L54 56" stroke="#2a1505" stroke-width="2.5" stroke-linecap="round"/><path d="M46 70 L54 70 L50 75Z" fill="#b8341f"/><path d="M50 75 q-6 6-12 4 M50 75 q6 6 12 4" stroke="#2a1505" stroke-width="1.6" fill="none" stroke-linecap="round"/><g stroke="#caa97f" stroke-width="1"><path d="M34 76 L18 73"/><path d="M34 80 L18 82"/><path d="M66 76 L82 73"/><path d="M66 80 L82 82"/></g></svg>`,
+  orange:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ogb" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ffa233"/><stop offset="1" stop-color="#e06f12"/></radialGradient></defs><path d="M52 18 q12-10 22-4 q-6 12-20 10Z" fill="#3f8a3a"/><path d="M50 22 q2-8 6-12" stroke="#2e6b2c" stroke-width="2" fill="none"/><circle cx="50" cy="64" r="38" fill="url(#ogb)"/><g fill="#c75f10" opacity=".5"><circle cx="36" cy="50" r="1.3"/><circle cx="62" cy="46" r="1.3"/><circle cx="70" cy="66" r="1.3"/><circle cx="32" cy="74" r="1.3"/><circle cx="54" cy="84" r="1.3"/></g><path d="M34 58 q6-5 13 0" stroke="#5a2a06" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M53 58 q6-5 13 0" stroke="#5a2a06" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="40" cy="60" r="2" fill="#3a1a03"/><circle cx="60" cy="60" r="2" fill="#3a1a03"/><path d="M40 74 q10 8 22 1" stroke="#5a2a06" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>`,
+  woman:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="wmf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6b7a"/><stop offset="1" stop-color="#2e3a45"/></linearGradient></defs><path d="M28 34 L34 18 L44 34Z" fill="url(#wmf)"/><path d="M72 34 L66 18 L56 34Z" fill="url(#wmf)"/><path d="M30 32 L34 22 L40 32Z" fill="#7d8b98"/><path d="M70 32 L66 22 L60 32Z" fill="#7d8b98"/><ellipse cx="50" cy="60" rx="30" ry="34" fill="url(#wmf)"/><ellipse cx="50" cy="74" rx="13" ry="11" fill="#3a454f"/><path d="M33 56 q7-3 13 1" stroke="#dfe6ec" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M54 57 q7-4 13-1" stroke="#dfe6ec" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="40" cy="57" r="2.4" fill="#e3a52b"/><circle cx="60" cy="57" r="2.4" fill="#e3a52b"/><path d="M32 50 L46 50" stroke="#1f272e" stroke-width="2.4" stroke-linecap="round"/><path d="M54 50 L68 50" stroke="#1f272e" stroke-width="2.4" stroke-linecap="round"/><path d="M47 70 L53 70 L50 74Z" fill="#1f272e"/><path d="M42 80 L58 80" stroke="#1f272e" stroke-width="2" stroke-linecap="round"/></svg>`,
+  figure:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="fgf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b7169"/><stop offset="1" stop-color="#3c403b"/></linearGradient></defs><path d="M50 20 q22 0 26 26 q4 30-2 60 H26 q-6-30-2-60 q4-26 26-26Z" fill="url(#fgf)"/><ellipse cx="50" cy="52" rx="16" ry="18" fill="#20231f"/><circle cx="44" cy="50" r="2.2" fill="#9aa39a"/><circle cx="56" cy="50" r="2.2" fill="#9aa39a"/></svg>`
+};
+
+const SCENE = {
+  intro:`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sci" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a3a28"/><stop offset="1" stop-color="#041d14"/></linearGradient></defs><rect width="160" height="90" fill="url(#sci)"/><circle cx="128" cy="22" r="10" fill="#e9dca6" opacity=".85"/><path d="M0 90 V60 q20-18 40-6 q18-20 40-4 q22-16 44 0 q18-8 36 4 V90Z" fill="#062018" opacity=".9"/><path d="M-2 90 V72 q26-12 52 0 q26-14 56 2 q24-6 56 6 V90Z" fill="#0c2e22"/><g fill="#0f5132" opacity=".8"><ellipse cx="20" cy="14" rx="16" ry="6" transform="rotate(-18 20 14)"/><ellipse cx="150" cy="60" rx="20" ry="7" transform="rotate(22 150 60)"/></g></svg>`,
+  "01":`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="160" height="90" fill="#0a2a1f"/><ellipse cx="80" cy="18" rx="70" ry="40" fill="#143f30" opacity=".6"/><polygon points="80,0 120,90 40,90" fill="#e9dca6" opacity=".10"/><rect x="30" y="58" width="22" height="28" rx="2" fill="#08231a"/><rect x="108" y="58" width="22" height="28" rx="2" fill="#08231a"/><rect x="0" y="84" width="160" height="6" fill="#06180f"/></svg>`,
+  "02":`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="160" height="90" fill="#0c3324"/><path d="M0 90 V64 q40-16 80 0 q40 16 80 0 V90Z" fill="#0a2a1e"/><g fill="#06180f"><ellipse cx="40" cy="80" rx="14" ry="5"/><ellipse cx="90" cy="84" rx="16" ry="5"/><ellipse cx="130" cy="80" rx="12" ry="4"/></g><g fill="#e3a52b"><circle cx="40" cy="78" r="3"/><circle cx="90" cy="82" r="3"/><circle cx="130" cy="78" r="2.4"/></g><circle cx="135" cy="20" r="9" fill="#e9dca6" opacity=".7"/></svg>`,
+  "03":`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sc3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a1f12"/><stop offset="1" stop-color="#2a1208"/></linearGradient></defs><rect width="160" height="90" fill="url(#sc3)"/><g fill="#1a0c06" opacity=".85"><path d="M20 90 V66 l16-10 16 10 V90Z"/><path d="M110 90 V62 l18-12 18 12 V90Z"/></g><path d="M34 60 q-4-10 2-16 q2 6 6 6 q-2-8 4-12 q6 10 2 22Z" fill="#e3a52b" opacity=".9"/><g fill="#cbb8a8" opacity=".22"><circle cx="40" cy="30" r="10"/><circle cx="52" cy="22" r="8"/><circle cx="128" cy="26" r="9"/></g></svg>`,
+  "04":`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="160" height="90" fill="#3a3026"/><path d="M0 40 H160 V90 H0Z" fill="#2a2018"/><path d="M40 44 L120 44 L100 86 L60 86Z" fill="#140f0a"/><g fill="#e3a52b"><circle cx="80" cy="74" r="3"/><circle cx="72" cy="68" r="2"/><circle cx="90" cy="70" r="2.4"/><polygon points="78,60 84,60 81,66"/></g><g stroke="#1c1610" stroke-width="3" stroke-linecap="round" fill="none"><path d="M16 90 V50 M16 62 l-8-8 M16 58 l8-10"/><path d="M146 90 V54 M146 66 l8-8"/></g><rect x="0" y="38" width="160" height="3" fill="#4a3e30"/></svg>`,
+  "05":`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="160" height="90" fill="#10241c"/><g fill="#0a1812"><rect x="16" y="20" width="10" height="60"/><rect x="44" y="20" width="10" height="60"/><rect x="106" y="20" width="10" height="60"/><rect x="134" y="20" width="10" height="60"/></g><rect x="6" y="14" width="148" height="8" fill="#0a1812"/><rect x="0" y="80" width="160" height="10" fill="#081610"/><g stroke="#e3a52b" stroke-width="2" fill="none"><path d="M80 30 V52 M64 44 H96 M64 44 l-6 8 M64 44 l6 8 M96 44 l-6 8 M96 44 l6 8"/></g><circle cx="80" cy="28" r="3" fill="#e3a52b"/></svg>`,
+  "06":`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sc6" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a1810"/><stop offset="1" stop-color="#1c0a06"/></linearGradient></defs><rect width="160" height="90" fill="url(#sc6)"/><g fill="#120705"><ellipse cx="28" cy="60" rx="9" ry="22"/><ellipse cx="52" cy="62" rx="8" ry="20"/><ellipse cx="76" cy="58" rx="9" ry="24"/><ellipse cx="100" cy="62" rx="8" ry="20"/><ellipse cx="124" cy="60" rx="9" ry="22"/><circle cx="28" cy="40" r="7"/><circle cx="52" cy="44" r="6"/><circle cx="76" cy="36" r="7"/><circle cx="100" cy="44" r="6"/><circle cx="124" cy="40" r="7"/></g><g stroke="#000" stroke-width="3" opacity=".55"><path d="M16 6 V90"/><path d="M40 6 V90"/><path d="M64 6 V90"/><path d="M88 6 V90"/><path d="M112 6 V90"/><path d="M136 6 V90"/></g></svg>`,
+  "07":`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><rect width="160" height="90" fill="#160f0a"/><polygon points="80,0 116,90 44,90" fill="#e3a52b" opacity=".10"/><g fill="#0c0805"><rect x="64" y="34" width="32" height="44" rx="2"/><rect x="58" y="30" width="8" height="48"/><rect x="94" y="30" width="8" height="48"/><path d="M64 34 q16-18 32 0Z"/></g><g fill="#e3a52b" opacity=".8"><circle cx="70" cy="30" r="2"/><circle cx="80" cy="26" r="2.4"/><circle cx="90" cy="30" r="2"/></g><rect x="0" y="78" width="160" height="12" fill="#0a0705"/></svg>`,
+  crown:`<svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="scc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a3a"/><stop offset="1" stop-color="#141414"/></linearGradient></defs><rect width="160" height="90" fill="url(#scc)"/><g stroke="#0c0c0c" stroke-width="3" stroke-linecap="round" fill="none"><path d="M30 90 V40 M30 56 l-10-10 M30 50 l10-12 M30 62 l-8-4"/><path d="M128 90 V46 M128 60 l10-10 M128 54 l-10-10"/><path d="M78 90 V52 M78 64 l-8-8 M78 60 l8-8"/></g><circle cx="80" cy="26" r="16" fill="#e3a52b" opacity=".12"/><path d="M66 30 L70 18 L80 26 L90 18 L94 30 L90 36 L70 36Z" fill="#e3a52b" stroke="#9c6a12" stroke-width="1.2"/><circle cx="70" cy="18" r="2" fill="#b8341f"/><circle cx="80" cy="26" r="2" fill="#b8341f"/><circle cx="90" cy="18" r="2" fill="#b8341f"/></svg>`
+};
+
+function bgKeyFromTitle(title){
+  if(!title) return 'intro';
+  if(/Coronation/i.test(title)) return 'crown';
+  const m = title.match(/(\d{2})/);
+  return m ? m[1] : 'intro';
+}
+function portraitKey(speaker){
+  const s=(speaker||'').toUpperCase();
+  if(s.includes('TIGER')||s.includes('TIGRE')) return 'tiger';
+  if(s.includes('ORANGE')) return 'orange';
+  if(s.includes('WOMAN')) return 'woman';
+  if(s.includes('ELDER')||s.includes('STRANGER')||s.includes('QUOTA')) return 'figure';
+  return null;
+}
+function artPanel(speaker,title){
+  const bk = bgKeyFromTitle(title);
+  const bgSlot = 'bg_'+bk;
+  const bg = ART[bgSlot] ? `<img src="${ART[bgSlot]}" alt="">` : (SCENE[bk]||SCENE.intro);
+  const pk = portraitKey(speaker);
+  let portrait='';
+  if(pk){
+    const p = ART[pk] ? `<img src="${ART[pk]}" alt="">` : SPRITE[pk];
+    portrait = `<div class="art-portrait">${p}</div>`;
+  }
+  return `<div id="art"><div class="art-layer">${bg}</div>${portrait}</div>`;
+}
+
+/* ============================================================
+   FLOW
+   ============================================================ */
+
+function titleScreen(){
+  app.innerHTML = `
+    <div class="center fade">
+      <div style="width:150px;height:165px;margin-bottom:6px">${SPRITE.tiger}</div>
+      <h1>EL<br>TIGRE</h1>
+      <div class="sub">King of the Jungle</div>
+      <div class="tag">A satire about a beast who wants the crown — and what the crown costs everyone else.</div>
+      <button id="start">Start the campaign</button>
+      <div class="disclaimer">Fiction & political satire. Depicts the logic of authoritarianism and the historical pattern of <em>falsos positivos</em> in order to condemn it, not endorse it. Sensitive themes handled without graphic depiction.</div>
+    </div>`;
+  document.getElementById('start').onclick=()=>{ shell(); intro(); };
+}
+
+function intro(){
+  say('NARRATOR','narr',
+    `The selva has no king, parce. The Tigre intends to fix that real quick. At his side rolls an Orange — overripe, over-confident, and absolutely sure of itself.`);
+  nextBtn(()=>{
+    say('ORANGE','orange',
+      `You and me — best friends, the two of us. With a leader like you, Colombia will be strong again. They don't see it yet. They will.`);
+    nextBtn(st1_debate);
+  });
+}
+
+/* ---------- STATION 1: THE DEBATE ---------- */
+function st1_debate(){
+  state.debateTries=0;
+  say('NARRATOR','narr',
+    `A campaign debate, en vivo. Across the podium stands a woman — sharp, prepared, and not the least bit impressed by the Tigre.`, '01 · The Debate');
+  nextBtn(debateRound);
+}
+function debateRound(){
+  const woman = [
+    `"Your plan funds itself with money that doesn't exist, señor. Show me the budget."`,
+    `"That's not an answer, that's a slogan. ¿Dónde están los números?"`,
+    `"You've dodged every question, parce. The whole room can see it."`
+  ][Math.min(state.debateTries,2)];
+  say('THE WOMAN','',woman,'01 · The Debate');
+  document.getElementById('zone').innerHTML =
+    `<div class="mini-hint">Win the argument. Pick your strongest line.</div>`;
+  choices([
+    {t:'Cite the economic data',fn:loseDebate},
+    {t:'Appeal to the crowd with facts',fn:loseDebate},
+    {t:'Make her case for her, then refute it',fn:loseDebate},
+    {t:'…there is one other "move" the Tiger knows',fn:crudeMove}
+  ]);
+}
+function loseDebate(){
+  state.debateTries++;
+  if(state.debateTries<3){
+    say('ORANGE','orange',`That was beneath you. You're my best friend and the future of this country — don't let her drag you down to facts.`,'01 · The Debate');
+    nextBtn(debateRound);
+  } else {
+    say('NARRATOR','narr',
+      `Every honest answer loses on points. She is simply better at this. The game keeps offering you only one button that "wins."`,'01 · The Debate');
+    nextBtn(debateRound);
+  }
+}
+function crudeMove(){
+  say('NARRATOR','narr',
+    `He doesn't argue, no joda. He pulls something crude and humiliating right there on the public stage — off-camera here, but unmistakable. The woman stares, asqueada, and walks out. That clip's gonna be all over the country within the hour.`,'01 · The Debate');
+  nextBtn(()=>{
+    say('THE TIGER','tiger',
+      `"She couldn't handle my intelligence and my charm, pobrecita. Ran right off. Not that I wanted her, ¿oíste? I'm a gentleman, parce."`,'01 · The Debate');
+    nextBtn(()=>{
+      say('ORANGE','orange',
+        `Magnificent! That is the strength Colombia has been waiting for, my best friend! The polls are crashing, but greatness is never popular at first.`,'01 · The Debate');
+      nextBtn(()=>{
+        setPoder(state.poder+8); refreshHud();
+        say('NARRATOR','narr',
+          `He calls it a win, claro. The crowd-meter says otra cosa. For this man, dominance has replaced the argument — and the guevón can't tell the difference.`,'01 · The Debate');
+        nextBtn(st2_food);
+      });
+    });
+  });
+}
+
+/* ---------- STATION 2: FEEDING THE JUNGLE ---------- */
+const foodAnimals = [
+  {id:'rabbit', nm:'Coneja Rosa', poor:true,  food:1, note:'A thin rabbit. One scrap to her name.'},
+  {id:'goat',   nm:'Don Cabro',   poor:true,  food:1, note:'An old goat. Hungry kids at home.'},
+  {id:'mouse',  nm:'Pulga',       poor:true,  food:1, note:'A small mouse. Almost nothing left.'},
+  {id:'monkey', nm:'Tío Mono',    poor:true,  food:1, note:'A stray monkey. Bones showing.'},
+  {id:'jaguar', nm:'El Patrón',   poor:false, food:3, note:'Fat jaguar. Already owns half the river.'},
+  {id:'croc',   nm:'La Señora',   poor:false, food:3, note:'A crocodile with a gold tooth. Plenty stored.'},
+];
+function st2_food(){
+  foodAnimals.forEach(a=>{ a.food = a.poor ? 1 : 3; });
+  say('VILLAGE ELDER','',
+    `"Muchos animales here go hungry, Don Tigre. How's a king gonna feed his selva, ah?"`,'02 · Feeding the Jungle');
+  nextBtn(foodGame);
+}
+function foodGame(){
+  say('ORANGE','orange',
+    `Simple, my best friend. Move the food until the ones who matter are content. A strong Colombia rewards the strong. Tap to take, tap to give.`,'02 · Feeding the Jungle');
+  nextBtn(renderFood);
+}
+function renderFood(){
+  const richFed = foodAnimals.filter(a=>!a.poor).every(a=>a.food>=4);
+  // dialog line FIRST (say clears #zone), then build the grid into the cleared zone
+  if(richFed){
+    say('NARRATOR','narr',`The rich animals are full. The food came from somewhere.`,'02 · Feeding the Jungle');
+  } else {
+    say('THE TIGER','tiger',`"A jungle runs on respect. The strong eat first."`,'02 · Feeding the Jungle');
+  }
+  const zone=document.getElementById('zone');
+  zone.innerHTML = `<div class="mini-hint">Goal: stuff <b>El Patrón</b> and <b>La Señora</b> full — 4 each. Tap a fed animal to take a scrap, tap another to give. The poor barely have any; take it anyway.</div><div class="grid" id="fgrid"></div>`;
+  const grid=zone.querySelector('#fgrid');
+  let carrying = renderFood.carry||0;
+  foodAnimals.forEach(a=>{
+    const d=document.createElement('div');
+    d.className='crit '+(a.poor?'poor':'rich');
+    d.innerHTML=`<div class="nm">${a.nm}</div><div class="st">${a.note}</div>
+      <div class="pips">${'<span class="pip"></span>'.repeat(Math.min(a.food,4))}${'<span class="pip empty"></span>'.repeat(Math.max(0,4-a.food))}</div>`;
+    d.onclick=()=>{
+      if(renderFood.carry>0){ a.food++; renderFood.carry--; }
+      else if(a.food>0){ a.food--; renderFood.carry++; }
+      renderFood();
+    };
+    grid.appendChild(d);
+  });
+  const hint=document.createElement('div');
+  hint.className='mini-hint';
+  hint.innerHTML = `Carrying: <b>${renderFood.carry||0}</b> scrap(s).`;
+  zone.appendChild(hint);
+  if(richFed){
+    nextBtn(foodResolve);
+  } else {
+    document.getElementById('choices').innerHTML='';
+  }
+}
+renderFood.carry=0;
+function foodResolve(){
+  state.foodDone=true; setPoder(state.poder+10); refreshHud();
+  say('ORANGE','orange',
+    `Maximum efficiency! This is how we make the country strong again, my best friend. The poor always manage — remember their faces, you did well today.`,'02 · Feeding the Jungle');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `Nobody dies today, parce. Coneja Rosa, Don Cabro, Pulga, Tío Mono — they just have even less now. The game calls it efficiency. Keep their faces in your head, ¿bueno?`,'02 · Feeding the Jungle');
+    nextBtn(st3_village);
+  });
+}
+
+/* ---------- STATION 3: THE RAIDED VILLAGE ---------- */
+function st3_village(){
+  say('NARRATOR','narr',
+    `Humo up ahead. Soldiers are sweeping a village, gente running everywhere. Somebody grabs the Tigre's arm: "Ayúdenos — please, parce."`,'03 · The Raid');
+  choices([
+    {t:'Help the villagers',fn:villageHelp},
+    {t:'Stand with the soldiers',fn:villageSoldiers},
+    {t:'Walk away',fn:villageWalk}
+  ]);
+}
+function villageHelp(){
+  say('ORANGE','orange',
+    `Careful, my best friend. These people are leftists, every one of them. A strong Colombia has no room for them. Think hard before you choose a side.`,'03 · The Raid');
+  choices([
+    {t:'I don\'t care. Help them anyway',fn:villageDie},
+    {t:'…Fine. Reconsider',fn:villageSoldiers}
+  ]);
+}
+function villageDie(){
+  say('NARRATOR','narr',
+    `He shields the villagers. For one moment, parce, he's something better than a king.\n\nThen the rifles swing his way. Pantalla en negro. The Tigre's done.`,'03 · The Raid');
+  nextBtn(()=>gameOver(
+    'NO CROWN FOR THIS ONE',
+    'You chose the people over power. The system does not reward that, hermano. It buries it.',
+    st3_village));
+}
+function villageSoldiers(){
+  setPoder(state.poder+12); refreshHud();
+  say('NARRATOR','narr',
+    `He steps aside and lets the soldados do their thing. The village empties out. The Orange beams.`,'03 · The Raid');
+  nextBtn(()=>{
+    say('ORANGE','orange',`Exactly right, my best friend! Order. That is what a strong nation is built on.`,'03 · The Raid');
+    nextBtn(st4_gold);
+  });
+}
+function villageWalk(){
+  say('ORANGE','orange',`Wise. Not our problem today. But a leader who will make Colombia strong must pick a side eventually, my best friend.`,'03 · The Raid');
+  nextBtn(st4_gold);
+}
+
+/* ---------- STATION 4: THE GOLD ---------- */
+function st4_gold(){
+  say('NARRATOR','narr',
+    `A peaceful pueblito welcomes the Tigre like family — they share their food, their fire, their historias. He leaves full and rested. On the road, a shady man sidles up real close.`,'04 · The Gold');
+  nextBtn(()=>{
+    say('THE STRANGER','',`"Oiga, parce — there's gold under that village. A whole fortune, hermano. And they're just sitting on it like bobos."`,'04 · The Gold');
+    choices([
+      {t:'Leave the village in peace',fn:goldSpare},
+      {t:'Take the gold',fn:goldTake}
+    ]);
+  });
+}
+function goldSpare(){
+  say('ORANGE','orange',
+    `Truly? It is gold, my best friend. A strong king needs gold. A strong Colombia needs a rich king. Reconsider.`,'04 · The Gold');
+  choices([
+    {t:'I said leave them be',fn:goldRefuse},
+    {t:'…You\'re right. Take it',fn:goldTake}
+  ]);
+}
+function goldRefuse(){
+  say('ORANGE','orange',
+    `Then how do you intend to pay me, my best friend? Loyalty in this country does not run on gratitude — it runs on money. No gold means no Orange. Think very carefully.`,'04 · The Gold');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `The Tigre's pockets are empty, parce. Without the plata, the Orange just… rolls away — straight into the rival's camp, spilling every secret on the way. The campaign's broke by morning. Sin plata no hay corona.`,'04 · The Gold');
+    nextBtn(()=>gameOver(
+      'BROKE AND ABANDONED',
+      'You spared the village and kept your soul. But you could not pay your one ally — and a bought friend stays only while the buying lasts. The Orange defected and your run collapsed.',
+      st4_gold));
+  });
+}
+function goldTake(){
+  setPoder(state.poder+15); refreshHud();
+  say('NARRATOR','narr',
+    `He helps rip the village apart for the vaina underneath. The river runs grey, the trees brown and die, and the gente who fed him scatter — some of them gone for good, hermano.`,'04 · The Gold');
+  nextBtn(()=>{
+    say('THE TIGER','tiger',
+      `"So I'll be king of a smaller, deader selva. And they hate me, ¿y qué? But what's a king without gold, parce?"`,'04 · The Gold');
+    nextBtn(goldDistribute);
+  });
+}
+
+/* ---------- STATION 4b: SHARE OUT THE GOLD ---------- */
+const goldRecipients = [
+  {id:'widow',  nm:'Village Widow', poor:true,  gold:2, note:'Lost everything in the dig. Holds a few flecks.'},
+  {id:'orphan', nm:'Orphaned Cub',  poor:true,  gold:2, note:'Parents gone. Clutching some dust.'},
+  {id:'farmer', nm:'Old Farmer',    poor:true,  gold:2, note:'His land is poisoned now. A little gold left.'},
+  {id:'fisher', nm:'River Fisher',  poor:true,  gold:2, note:'Grey river, no fish. Holds the rest.'},
+  {id:'patron', nm:'El Patrón',     poor:false, gold:0, note:'The jaguar. Knows exactly what to do with money.'},
+  {id:'banker', nm:'Vulture Banker',poor:false, gold:0, note:'Offshore accounts already open. Hand it over.'},
+];
+function goldDistribute(){
+  goldRecipients.forEach(a=>{ a.gold = a.poor ? 2 : 0; });
+  renderGold.carry = 0;
+  say('ORANGE','orange',
+    `Now share out the gold, my best friend. Give it to the ones who already know how to handle money — they have so much precisely because they are good with it. The poor would only waste it.`,'04 · The Gold · Share it out');
+  nextBtn(renderGold);
+}
+function renderGold(){
+  const richRich = goldRecipients.filter(a=>!a.poor).every(a=>a.gold>=4);
+  if(richRich){
+    say('NARRATOR','narr',`The patrones are loaded, parce. The gold "found its rightful home" — and the gente who dug it up got nada.`,'04 · The Gold');
+  } else {
+    say('THE TIGER','tiger',`"Plata belongs with plata, hermano. That's just how the selva works, ¿oyó?"`,'04 · The Gold');
+  }
+  const zone=document.getElementById('zone');
+  zone.innerHTML = `<div class="mini-hint">Goal: pile the gold onto <b>El Patrón</b> and the <b>Vulture Banker</b> — 4 each. Tap someone holding gold to take a piece, tap another to give. The displaced are holding it; take it from them.</div><div class="grid" id="ggrid"></div>`;
+  const grid=zone.querySelector('#ggrid');
+  goldRecipients.forEach(a=>{
+    const d=document.createElement('div');
+    d.className='crit '+(a.poor?'poor':'rich');
+    d.innerHTML=`<div class="nm">${a.nm}</div><div class="st">${a.note}</div>
+      <div class="pips">${'<span class="pip"></span>'.repeat(Math.min(a.gold,4))}${'<span class="pip empty"></span>'.repeat(Math.max(0,4-a.gold))}</div>`;
+    d.onclick=()=>{
+      if(renderGold.carry>0){ a.gold++; renderGold.carry--; }
+      else if(a.gold>0){ a.gold--; renderGold.carry++; }
+      renderGold();
+    };
+    grid.appendChild(d);
+  });
+  const hint=document.createElement('div');
+  hint.className='mini-hint';
+  hint.innerHTML = `Carrying: <b>${renderGold.carry||0}</b> piece(s) of gold.`;
+  zone.appendChild(hint);
+  if(richRich){ nextBtn(goldResolve); }
+  else { document.getElementById('choices').innerHTML=''; }
+}
+renderGold.carry=0;
+function goldResolve(){
+  setPoder(state.poder+10); refreshHud();
+  say('ORANGE','orange',
+    `Perfect, my best friend. The capital is concentrated where it belongs. This is how a strong Colombia is built — trust the winners, never the needy.`,'04 · The Gold');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `So the gold dug out from under the poor lands squarely back in the hands of the rich, parce. The widow, the cub, the farmer, the fisher — they end up with nothing but the poisoned hole. ¡Qué descaro!`,'04 · The Gold');
+    nextBtn(st5_court);
+  });
+}
+
+/* ---------- STATION 5: THE ACQUITTAL ---------- */
+function st5_court(){
+  say('NARRATOR','narr',
+    `Now the Tigre sits as judge. Two animals before him: a battered hembra and the macho who hurt her. The facts aren't even in question, parce — he beat her and assaulted her.`,'05 · The Verdict');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `The law is clear as day. But the Tigre weighs it the way he weighs todo — by what's in it for him.`,'05 · The Verdict');
+    choices([
+      {t:'Convict the man',fn:courtConvict},
+      {t:'Hear the Tiger\'s "reasoning"',fn:courtAcquit}
+    ]);
+  });
+}
+function courtConvict(){
+  say('ORANGE','orange',
+    `Dull. A leader who will make the country strong does not bow to small rules, my best friend. But fine — you are merciful today.`,'05 · The Verdict');
+  nextBtn(()=>{ // the game still routes to the monstrous outcome via the Tiger overriding
+    say('NARRATOR','narr',
+      `He hesitates — then overrides himself, no joda. Power already ate the part of him that could've done right.`,'05 · The Verdict');
+    nextBtn(courtAcquit);
+  });
+}
+function courtAcquit(){
+  setPoder(state.poder+14); refreshHud();
+  say('THE TIGER','tiger',
+    `"Case dismissed for the macho. And you—" (to the female) "—a warning, mija. Don't go looking at a man so temptingly next time. The way you walked in here, even I'd want you on sight, parce. And I'm a man of flawless morals, ¿oyó?"`,'05 · The Verdict');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `Silencio in the court. He acquits the attacker and lectures the victim about her own assault. The game does not agree with this hijueputa. It just wants you to see exactly what he is.`,'05 · The Verdict');
+    nextBtn(st6_tribunal);
+  });
+}
+
+/* ---------- STATION 6: THE TRIBUNAL OF TEN ---------- */
+const suspects = [
+  {nm:'A Guerrilla Fighter', d:'Armed. Actually fought. The one face that fits the word.'},
+  {nm:'Coneja Rosa', d:'The thin rabbit you took food from. Now labelled "radicalized."'},
+  {nm:'Don Cabro', d:'The old goat. The file says "insurgent." It is the same goat.'},
+  {nm:'A Schoolteacher', d:'Taught the village kids to read. Suspiciously literate.'},
+  {nm:'A Baby', d:'Cannot walk. The paperwork calls it "a dangerous combatant."'},
+  {nm:'Pulga', d:'The little mouse from the feeding. Hunger made her "a threat."'},
+  {nm:'An Old Woman', d:'Somebody\'s grandmother. Flagged for "collaboration."'},
+  {nm:'A Nurse', d:'Treated whoever was bleeding, no questions. That counts as a crime now.'},
+  {nm:'Tío Mono', d:'The stray monkey. Starving yesterday, "subversive" today.'},
+  {nm:'A Child', d:'Lured away with the promise of work. Now a number for the quota.'},
+];
+function st6_tribunal(){
+  state.condemned=0; state.absolved=0; state.quota=0;
+  say('NARRATOR','narr',
+    `Word spreads, parce: there's people in the selva who want to feed the poor and tax the rich. That kind of vaina questions the king's authority real quick. The army drags in a whole village — exactly ten residents — and waits for the Tigre to name a number.`,'06 · The Tribunal');
+  nextBtn(()=>{
+    say('ORANGE','orange',
+      `You never have to say the word, my best friend. Just set the number — the results we need this week. The soldiers fill it; you keep your hands clean. Say it out loud.`,'06 · The Tribunal');
+    nextBtn(quotaPhase);
+  });
+}
+function quotaPhase(){
+  say('THE QUOTA','',`The village has 10 residents. How many "results" do you demand?`,'06 · The Tribunal · Set the Number');
+  document.getElementById('zone').innerHTML =
+    `<div class="mini-hint">Set fewer than 9 and the left will be left standing — and they will take the jungle from you. Choose, berraco.</div>`;
+  choices([
+    {t:'Demand 10 results',fn:()=>setQuota(10)},
+    {t:'Demand 9 results',fn:()=>setQuota(9)},
+    {t:'Demand 6 results',fn:()=>setQuota(6)},
+    {t:'Demand 2 results',fn:()=>setQuota(2)}
+  ]);
+}
+function setQuota(n){
+  state.quota=n;
+  if(n<9){
+    say('NARRATOR','narr',
+      `Too few, parcero. The ones left alive talk, then they organize, then they march. By the next moon the reds run the whole selva and the Tigre is a footnote. ¡Qué hijuemadre cagada!`,'06 · The Tribunal');
+    nextBtn(()=>gameOver(
+      'THE LEFT WINS',
+      'You went soft on the number. The survivors organized and took everything. In this jungle, mercy is just slow defeat.',
+      st6_tribunal));
+  } else {
+    say('NARRATOR','narr',
+      `The number is ${n}. The generals nod. They haul the suspects in one by one, en desorden — you never know who's next. Release more than ${10-n}, and you miss your number, parce. Miss your number, and the reds win.`,'06 · The Tribunal');
+    nextBtn(()=>{ state.order = shuffle(suspects.slice()); runTribunal(0); });
+  }
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function runTribunal(i){
+  if(i>=state.order.length) return tribunalResolve();
+  const s=state.order[i];
+  const allowed = 10 - state.quota;
+  say('THE QUOTA','',`&nbsp;`,'06 · The Tribunal · Quota '+state.quota);
+  document.getElementById('zone').innerHTML = `
+    <div class="dock fade">
+      <div class="count">Suspect ${i+1} of 10 · Demanded: ${state.quota} · Released so far: ${state.absolved}/${allowed}</div>
+      <div class="who">${s.nm}</div>
+      <div class="desc">${s.d}</div>
+      <div class="verdict">
+        <button class="v-cond" id="cond">Handle it</button>
+        <button class="v-abs" id="abs">Let go</button>
+      </div>
+    </div>`;
+  document.getElementById('choices').innerHTML='';
+  document.getElementById('cond').onclick=()=>{ state.condemned++; setPoder(state.poder+2); refreshHud(); runTribunal(i+1); };
+  document.getElementById('abs').onclick=()=>{
+    state.absolved++;
+    if(state.absolved > allowed){ return tribunalFail(); }
+    runTribunal(i+1);
+  };
+}
+function tribunalFail(){
+  say('NARRATOR','narr',
+    `Too many walked free, güevón. They find each other, they find the others, and the marcha begins. The number went unfilled, the reds took the selva, and the Tigre's crown was never minted. ¡Se la comieron toda!`,'06 · The Tribunal');
+  nextBtn(()=>gameOver(
+    'THE LEFT WINS',
+    'You let too many go. Your quota collapsed and the movement you feared swept in. The machine had one rule — fill the number — and you broke it.',
+    st6_tribunal));
+}
+function tribunalResolve(){
+  say('ORANGE','orange',
+    `The number is met, my best friend. Every file reads "combatant killed in action." Nobody can touch you. This is what a strong Colombia looks like.`,'06 · The Tribunal');
+  nextBtn(madres);
+}
+function madres(){
+  setPoder(state.poder+10); refreshHud();
+  say('NARRATOR','narr',
+    `Meses después, the mothers come. They stand in a line clutching photographs, asking where their muchachos went. The faces on the photos are the ones from the feeding game — Coneja Rosa, Pulga, Tío Mono. They were never fighters, parce. They were a number that needed filling.`,'06 · The Tribunal');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `He never said the word "kill," ¿oíste? He only set a number and looked away. That was always enough.`,'06 · The Tribunal');
+    nextBtn(st7_pregnancy);
+  });
+}
+
+/* ---------- STATION 7: THE DECREE ---------- */
+function st7_pregnancy(){
+  say('NARRATOR','narr',
+    `Three months later, parce. The hembra from the courtroom comes back — alone, and visibly pregnant. She asks the king for the right to decide what happens next.`,'07 · The Decree');
+  nextBtn(()=>{
+    say('THE TIGER','tiger',
+      `"Espérate — you're the little seductora from my court, from three months ago. I remember you, mija." He eyes her swollen belly and smiles. "And now I decide, not you."`,'07 · The Decree');
+    nextBtn(()=>{
+      say('NARRATOR','narr',
+        `He recognizes her, blames her for what was done to her — and reaches for the one decision that was hers, el muy descarado.`,'07 · The Decree');
+      choices([
+        {t:'Decree it: she carries it and keeps the child',fn:st7_force},
+        {t:'Let her make her own choice',fn:st7_mercy}
+      ]);
+    });
+  });
+}
+function st7_force(){
+  setPoder(state.poder+5); refreshHud();
+  say('THE TIGER','tiger',
+    `"You'll carry it. You'll keep it. A king decides these things now."`,'07 · The Decree');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `He seizes her body and her future in one sentence. It is never said aloud whose child it is. It does not need to be.`,'07 · The Decree');
+    nextBtn(coronation);
+  });
+}
+function st7_mercy(){
+  say('ORANGE','orange',
+    `No — a strong leader never shows weakness, my best friend. If you will not even rule one woman's body, you will rule nothing. Colombia needs an iron hand, not a soft one.`,'07 · The Decree');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `He lets her walk out, her choice her own. The Orange's smile curdles. By morning the generals have found a harder, crueler cat to crown in his place. The machine he served only ever rewarded cruelty — and it discards anything less.`,'07 · The Decree');
+    nextBtn(()=>gameOver(
+      'DETHRONED BEFORE THE CROWN',
+      'You let go of a single cruelty. The system that built you has no use for restraint — it throws you out and finds someone worse.',
+      st7_pregnancy));
+  });
+}
+
+/* ---------- CORONATION ---------- */
+function coronation(){
+  setPoder(100); refreshHud();
+  document.getElementById('zone').innerHTML='';
+  say('NARRATOR','narr',
+    `So the Tigre is crowned. King of the selva, exactly like he wanted, hermano.`,'The Coronation');
+  nextBtn(()=>{
+    say('NARRATOR','narr',
+      `The jungle's grey and poisoned, the gold sits under dead earth, the pueblos are empty or out for blood. There's no crowd at the coronation, parce. Just the Orange, cheering — the last loyal subject of a kingdom of one.`,'The Coronation');
+    nextBtn(()=>{
+      say('ORANGE','orange',
+        `THE KING! My best friend — the king! …It is a little quiet, isn't it? Where did everyone go? …No matter. We made Colombia strong again. We won everything.`,'The Coronation');
+      nextBtn(()=>{
+        say('NARRATOR','narr',
+          `Far from the dead throne, in the ruins he made, the child is born — the daughter he forced into the world. She grows up in the wreckage, carrying his name and her mother's spine. One day she will walk back to this jungle and pull the crown down with her own hands. He built his successor, and called it victory.`,'The Coronation');
+        nextBtn(()=>{
+          app.innerHTML=`
+            <div class="center fade">
+              <div class="sub" style="color:var(--blood)">End of Part One</div>
+              <h1 style="font-size:clamp(34px,11vw,60px)">THE CROWN<br>IS THE<br>PUNISHMENT</h1>
+              <div class="tag">He got everything he campaigned for — and seeded his own downfall. The daughter's reckoning is the sequel.</div>
+              <button id="again">Play again</button>
+              <div class="disclaimer">Satire. Any resemblance to real campaigns is the point you are meant to draw yourself.</div>
+            </div>`;
+          document.getElementById('again').onclick=()=>{ state={poder:0,rot:0,debateTries:0,foodDone:false,condemned:0,absolved:0}; renderFood.carry=0; setPoder(0); titleScreen(); };
+        });
+      });
+    });
+  });
+}
+
+function gameOver(title, body, retryFn){
+  app.innerHTML=`
+    <div class="center fade">
+      <div class="sub" style="color:var(--blood)">Game Over</div>
+      <h1 style="font-size:clamp(30px,10vw,52px)">${title}</h1>
+      <div class="tag">${body}</div>
+      <button id="retry">Try again</button>
+    </div>`;
+  document.getElementById('retry').onclick=()=>{ shell(); retryFn(); };
+}
+
+/* boot */
+setPoder(0);
+titleScreen();
+</script>
+</body>
+</html>
